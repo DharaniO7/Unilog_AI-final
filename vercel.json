@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix frontend/industrial-ai-dashboard run build",
+  "installCommand": "npm --prefix frontend/industrial-ai-dashboard install",
+  "outputDirectory": "frontend/industrial-ai-dashboard/.next"
+}

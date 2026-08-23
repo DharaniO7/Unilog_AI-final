@@ -31,6 +31,9 @@ Thumbs.db
 node_modules/
 dist/
 build/
+.next/
+out/
+.vercel/
 
 # Notebooks
 .ipynb_checkpoints/
