@@ -1,4 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_BACKEND_URL ?? (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '' : 'http://localhost:8000')
+const API_BASE = (process.env.NEXT_PUBLIC_BACKEND_URL && process.env.NEXT_PUBLIC_BACKEND_URL.trim() !== '') 
+  ? process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, '')
+  : (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+    ? 'https://unilog-ai-final-backedn.onrender.com'
+    : 'http://localhost:8000')
 
 export type Job = {
   id: string
@@ -6,7 +10,10 @@ export type Job = {
   status: string
   total_rows: number
   processed_rows: number
+  successful_rows?: number
+  failed_rows?: number
   needs_review_count: number
+  cancelled?: boolean
   logs: string[]
 }
 
@@ -47,11 +54,18 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
   const token = typeof window !== 'undefined' ? window.localStorage.getItem('unilog.accessToken') : null
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  const response = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  
+  let response: Response
+  try {
+    response = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  } catch (err) {
+    throw new Error(`Cannot reach backend at ${API_BASE}. ${err instanceof Error ? err.message : 'Network error'}`)
+  }
+
   const data = await response.json().catch(() => null) as { detail?: string } | T | null
   if (!response.ok) {
     const detail = data && typeof data === 'object' && 'detail' in data ? data.detail : undefined
-    throw new Error(detail ?? `Backend request failed (${response.status})`)
+    throw new Error(detail ?? `Backend returned HTTP status ${response.status}`)
   }
   return data as T
 }
@@ -88,6 +102,10 @@ export function uploadCatalog(file: File) {
 
 export function getJob(jobId: string) {
   return request<Job>(`/api/pipeline/jobs/${jobId}`)
+}
+
+export function cancelJob(jobId: string) {
+  return request<{ status: string; message: string }>(`/api/pipeline/jobs/${jobId}/cancel`, { method: 'POST' })
 }
 
 export function getJobs() {

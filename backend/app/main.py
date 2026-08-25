@@ -22,8 +22,8 @@ for default_origin in ["http://localhost:3000", "http://127.0.0.1:3000", "http:/
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins if origins else ["*"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,6 +32,10 @@ app.include_router(health_router)
 app.include_router(pipeline_router, prefix="/api")
 app.include_router(chatbot_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
+
+@app.get("/")
+def root():
+    return {"status": "ok", "app": settings.app_name, "docs": "/docs"}
 
 # Serve built React frontend if available
 dist_path = Path(__file__).resolve().parents[2] / "frontend" / "industrial-ai-dashboard" / "out"
